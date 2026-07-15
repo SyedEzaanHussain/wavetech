@@ -1,0 +1,80 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AZIMUT LABS — Upload Cheque</title>
+<meta name="description" content="Upload cheque images into AZIMUT LABS.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}" type="text/css">
+</head>
+<body>
+<div class="app-shell" id="appShell">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-mark"></div>
+      <span class="brand-name">AZIMUT LABS</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="{% url 'dashboard' %}" class="nav-item" data-page="dashboard">
+        <i class="bi bi-grid-1x2-fill"></i>
+        <span class="nav-label">Dashboard</span>
+      </a>
+      <a href="{% url 'upload_cheque' %}" class="nav-item active" data-page="upload">
+        <i class="bi bi-cloud-arrow-up-fill"></i>
+        <span class="nav-label">Upload</span>
+      </a>
+      <a href="{% url 'queue' %}" class="nav-item" data-page="queue">
+        <i class="bi bi-list-check"></i>
+        <span class="nav-label">Queue</span>
+      </a>
+    </nav>
+  </aside>
+  <div class="main">
+    <main class="content">
+      <div class="brand-topbar d-flex d-md-none mb-3">
+        <span class="brand-pill">AZIMUT LABS</span>
+      </div>
+      <div class="page-heading fade-up">
+        <div>
+          <h1>Upload Cheque</h1>
+          <p>Select an image and store it in the database.</p>
+        </div>
+      </div>
+      <div class="panel fade-up" style="padding: 2rem; max-width: 720px; margin: 0 auto;">
+        {% if errors %}
+          <div class="alert alert-danger">
+            <ul>
+              {% for error in errors %}
+              <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label for="image_type" class="form-label">Cheque image type</label>
+            <select id="image_type" name="image_type" class="form-select">
+              <option value="front" {% if selected_image_type == 'front' %}selected{% endif %}>Front</option>
+              <option value="back" {% if selected_image_type == 'back' %}selected{% endif %}>Back</option>
+              <option value="front_uv" {% if selected_image_type == 'front_uv' %}selected{% endif %}>Front UV</option>
+              <option value="back_uv" {% if selected_image_type == 'back_uv' %}selected{% endif %}>Back UV</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label for="image_file" class="form-label">Cheque image file</label>
+            <input type="file" id="image_file" name="image_file" class="form-control" accept="image/*" required>
+          </div>
+
+          <button type="submit" class="btn btn-primary">Upload cheque</button>
+        </form>
+      </div>
+    </main>
+  </div>
+</div>
+</body>
+</html>

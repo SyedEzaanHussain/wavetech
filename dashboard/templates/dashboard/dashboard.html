@@ -1,0 +1,252 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AZIMUT LABS — Dashboard</title>
+<meta name="description" content="AZIMUT LABS operations dashboard — track cheques in queue, approvals, rejections and service health.">
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+
+<!-- Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+<!-- Bootstrap (grid + utilities only — visuals are custom) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+
+<!-- App styles -->
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}" type="text/css">
+</head>
+<body>
+
+<div class="app-shell" id="appShell">
+
+  <div class="sidebar-scrim" id="sidebarScrim"></div>
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-mark"></div>
+      <span class="brand-name">AZIMUT LABS</span>
+      <button class="sidebar-toggle-btn d-none d-md-flex" id="collapseBtn" aria-label="Collapse sidebar">
+        <i class="bi bi-chevron-left"></i>
+      </button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="sidebar-section-label">Workspace</div>
+      <a href="{% url 'dashboard' %}" class="nav-item active" data-page="dashboard">
+        <i class="bi bi-grid-1x2-fill"></i>
+        <span class="nav-label">Dashboard</span>
+      </a>
+      <a href="{% url 'upload_cheque' %}" class="nav-item" data-page="upload">
+        <i class="bi bi-cloud-arrow-up-fill"></i>
+        <span class="nav-label">Upload</span>
+      </a>
+      <a href="{% url 'queue' %}" class="nav-item" data-page="queue">
+        <i class="bi bi-list-check"></i>
+        <span class="nav-label">Queue</span>
+        <span class="nav-badge">{{ total_queue }}</span>
+      </a>
+      <a href="#" class="nav-item" data-page="approval">
+        <i class="bi bi-patch-check-fill"></i>
+        <span class="nav-label">Approval</span>
+      </a>
+
+      <div class="sidebar-section-label" style="margin-top:1.4rem;">Reports</div>
+      <a href="#" class="nav-item" data-page="analytics">
+        <i class="bi bi-bar-chart-fill"></i>
+        <span class="nav-label">Analytics</span>
+      </a>
+      <a href="#" class="nav-item" data-page="settings">
+        <i class="bi bi-gear-fill"></i>
+        <span class="nav-label">Settings</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="helpwidget" id="helpWidget">
+        <div class="helpwidget-avatar">?</div>
+        <div class="helpwidget-text">
+          <div style="font-weight:600; font-size:.85rem;">Help &amp; support</div>
+          <small>Docs, shortcuts, contact</small>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <div class="main">
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <button class="icon-btn d-md-none" id="mobileMenuBtn" aria-label="Open menu">
+        <i class="bi bi-list"></i>
+      </button>
+
+      <form action="{% url 'queue' %}" method="get" class="search-box">
+        <i class="bi bi-search"></i>
+        <input type="text" name="q" placeholder="Search cheque ID, payee, amount…" aria-label="Search" value="{{ q|default:'' }}">
+      </form>
+
+      <div class="brand-topbar d-none d-md-flex">
+        <span class="brand-pill">AZIMUT LABS</span>
+      </div>
+
+      <div class="topbar-actions">
+        <button class="icon-btn" id="themeToggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+          <i class="bi bi-moon-stars-fill"></i>
+        </button>
+        <button class="icon-btn" aria-label="Notifications" title="Notifications">
+          <i class="bi bi-bell-fill"></i>
+          <span class="dot"></span>
+        </button>
+        <div class="user-chip">
+          <div class="avatar-fallback">EZ</div>
+          <div class="d-none d-sm-block">
+            <div style="font-weight:600; font-size:.85rem; line-height:1.1;">Ezaan</div>
+            <div style="font-size:.72rem; color:var(--ink-faint); line-height:1.1;">Ops analyst</div>
+          </div>
+          <i class="bi bi-chevron-down" style="font-size:.7rem; color:var(--ink-faint);"></i>
+        </div>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <main class="content">
+
+      <div class="page-heading fade-up">
+        <div>
+          <div class="page-eyebrow">Overview · Updated just now</div>
+          <h1>Dashboard</h1>
+          <p>Everything moving through the cheque pipeline, at a glance.</p>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn-ghost-brand"><i class="bi bi-download"></i> Export</button>
+          <a href="{% url 'upload_cheque' %}" class="btn-primary-brand"><i class="bi bi-plus-lg"></i> Upload cheque</a>
+        </div>
+      </div>
+
+      <!-- Stat stubs -->
+      <div class="stub-row">
+        <div class="stub" data-accent="sky">
+          <span class="stub-notch top"></span><span class="stub-notch bottom"></span>
+          <div class="stub-body">
+            <div class="stub-icon"><i class="bi bi-clipboard2-data-fill"></i></div>
+            <div>
+              <div class="stub-label">Cheques in Queue</div>
+              <div class="stub-value" data-count="{{ total_queue }}">{{ total_queue }}</div>
+              <div class="stub-trend flat"><i class="bi bi-dash"></i> steady since yesterday</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stub" data-accent="mint">
+          <span class="stub-notch top"></span><span class="stub-notch bottom"></span>
+          <div class="stub-body">
+            <div class="stub-icon"><i class="bi bi-check-circle-fill"></i></div>
+            <div>
+              <div class="stub-label">Approved Cheques</div>
+              <div class="stub-value" data-count="{{ total_approved }}">{{ total_approved }}</div>
+              <div class="stub-trend up"><i class="bi bi-arrow-up-right"></i> live from DB</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stub" data-accent="rose">
+          <span class="stub-notch top"></span><span class="stub-notch bottom"></span>
+          <div class="stub-body">
+            <div class="stub-icon"><i class="bi bi-x-circle-fill"></i></div>
+            <div>
+              <div class="stub-label">Rejected Cheques</div>
+              <div class="stub-value" data-count="{{ total_rejected }}">{{ total_rejected }}</div>
+              <div class="stub-trend down"><i class="bi bi-arrow-down-right"></i> live from DB</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Service status -->
+      <div class="panel fade-up mb-4" style="animation-delay:.1s;">
+        <div class="panel-head">
+          <div>
+            <h2>Service Status</h2>
+            <div class="subtitle">Live health of the pipelines cheques run through</div>
+          </div>
+        </div>
+        <div class="status-row">
+          <div class="status-pill">
+            <span class="pulse-dot"></span> API <span class="status-meta">99.98% uptime</span>
+          </div>
+          <div class="status-pill">
+            <span class="pulse-dot"></span> OCR <span class="status-meta">99.4% uptime</span>
+          </div>
+          <div class="status-pill warn">
+            <span class="pulse-dot"></span> Bank Sync <span class="status-meta">degraded · retrying</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts row -->
+      <div class="grid-2">
+        <div class="panel fade-up" style="animation-delay:.16s;">
+          <div class="panel-head">
+            <div>
+              <h2>Cheques processed</h2>
+              <div class="subtitle">Last 7 days, approved vs. rejected</div>
+            </div>
+            <div class="filter-chip active">7D</div>
+          </div>
+          <div class="trend-chart" id="trendChart">
+            <!-- bars injected/animated via CSS, static markup for no-JS fallback -->
+            <div class="trend-bar-wrap"><div class="trend-bar" style="height:40%;"></div><span>Mon</span></div>
+            <div class="trend-bar-wrap"><div class="trend-bar" style="height:65%;"></div><span>Tue</span></div>
+            <div class="trend-bar-wrap"><div class="trend-bar" style="height:30%;"></div><span>Wed</span></div>
+            <div class="trend-bar-wrap"><div class="trend-bar" style="height:80%;"></div><span>Thu</span></div>
+            <div class="trend-bar-wrap"><div class="trend-bar" style="height:55%;"></div><span>Fri</span></div>
+            <div class="trend-bar-wrap"><div class="trend-bar" style="height:25%;"></div><span>Sat</span></div>
+            <div class="trend-bar-wrap"><div class="trend-bar" style="height:15%;"></div><span>Sun</span></div>
+          </div>
+          <div class="legend">
+            <span><i style="background:var(--primary);"></i> Approved</span>
+            <span><i style="background:var(--line-strong);"></i> Rejected</span>
+          </div>
+        </div>
+
+        <div class="panel fade-up" style="animation-delay:.22s;">
+          <div class="panel-head">
+            <div>
+              <h2>Queue breakdown</h2>
+              <div class="subtitle">Current 5 cheques by state</div>
+            </div>
+          </div>
+          <div class="donut-wrap">
+            <div class="donut" style="--p1:{{ approved_percent }};--p2:{{ rejected_percent }};--p3:{{ pending_percent }};">
+              <div class="donut-center"><b>{{ total_cheques }}</b><small>total</small></div>
+            </div>
+            <div class="donut-legend">
+              <div class="donut-legend-row"><span class="swatch" style="background:var(--mint);"></span> Approved <b>{{ total_approved }}</b></div>
+              <div class="donut-legend-row"><span class="swatch" style="background:var(--rose);"></span> Rejected <b>{{ total_rejected }}</b></div>
+              <div class="donut-legend-row"><span class="swatch" style="background:var(--amber);"></span> Pending review <b>{{ pending_count }}</b></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<div class="toast-brand" id="toast">
+  <i class="bi bi-check-circle-fill"></i>
+  <span id="toastMsg">Saved successfully</span>
+</div>
+
+<script src="{% static 'js/dashboard.js' %}" type="text/javascript"></script>
+</body>
+</html>

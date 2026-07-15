@@ -1,0 +1,566 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AZIMUT LABS — Cheque Details</title>
+<meta name="description" content="AZIMUT LABS cheque details and OCR verification.">
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+
+<!-- Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+<!-- Bootstrap -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+
+<!-- App styles -->
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}" type="text/css">
+</head>
+<body>
+
+<div class="app-shell" id="appShell">
+  <div class="sidebar-scrim" id="sidebarScrim"></div>
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-mark"></div>
+      <span class="brand-name">AZIMUT LABS</span>
+      <button class="sidebar-toggle-btn d-none d-md-flex" id="collapseBtn" aria-label="Collapse sidebar">
+        <i class="bi bi-chevron-left"></i>
+      </button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="sidebar-section-label">Workspace</div>
+      <a href="{% url 'dashboard' %}" class="nav-item" data-page="dashboard">
+        <i class="bi bi-grid-1x2-fill"></i>
+        <span class="nav-label">Dashboard</span>
+      </a>
+      <a href="{% url 'upload_cheque' %}" class="nav-item" data-page="upload">
+        <i class="bi bi-cloud-arrow-up-fill"></i>
+        <span class="nav-label">Upload</span>
+      </a>
+      <a href="{% url 'queue' %}" class="nav-item active" data-page="queue">
+        <i class="bi bi-list-check"></i>
+        <span class="nav-label">Queue</span>
+        <span class="nav-badge">{{ total_queue }}</span>
+      </a>
+      <a href="#" class="nav-item" data-page="approval">
+        <i class="bi bi-patch-check-fill"></i>
+        <span class="nav-label">Approval</span>
+      </a>
+
+      <div class="sidebar-section-label" style="margin-top:1.4rem;">Reports</div>
+      <a href="#" class="nav-item" data-page="analytics">
+        <i class="bi bi-bar-chart-fill"></i>
+        <span class="nav-label">Analytics</span>
+      </a>
+      <a href="#" class="nav-item" data-page="settings">
+        <i class="bi bi-gear-fill"></i>
+        <span class="nav-label">Settings</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="helpwidget">
+        <div class="helpwidget-avatar">?</div>
+        <div class="helpwidget-text">
+          <div style="font-weight:600; font-size:.85rem;">Help &amp; support</div>
+          <small>Docs, shortcuts, contact</small>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <div class="main">
+    <!-- Topbar -->
+    <header class="topbar">
+      <button class="icon-btn d-md-none" id="mobileMenuBtn" aria-label="Open menu">
+        <i class="bi bi-list"></i>
+      </button>
+
+      <div class="search-box">
+        <i class="bi bi-search"></i>
+        <input type="text" placeholder="Search cheque ID, amount, beneficiary…" aria-label="Search">
+      </div>
+
+      <div class="brand-topbar d-none d-md-flex">
+        <span class="brand-pill">AZIMUT LABS</span>
+      </div>
+
+      <div class="topbar-actions">
+        <button class="icon-btn" id="themeToggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+          <i class="bi bi-moon-stars-fill"></i>
+        </button>
+        <button class="icon-btn" aria-label="Notifications" title="Notifications">
+          <i class="bi bi-bell-fill"></i>
+          <span class="dot"></span>
+        </button>
+        <div class="user-chip">
+          <div class="avatar-fallback">EZ</div>
+          <div class="d-none d-sm-block">
+            <div style="font-weight:600; font-size:.85rem; line-height:1.1;">Ezaan</div>
+            <div style="font-size:.72rem; color:var(--ink-faint); line-height:1.1;">Ops analyst</div>
+          </div>
+          <i class="bi bi-chevron-down" style="font-size:.7rem; color:var(--ink-faint);"></i>
+        </div>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <main class="content">
+      <div class="cheque-detail-header">
+        <a href="{% url 'queue' %}" class="back-link">
+          <i class="bi bi-arrow-left"></i> Back to Queue
+        </a>
+        <h1>Cheque Detail - {{ cheque.system_id }}</h1>
+      </div>
+
+      <!-- Image Tabs -->
+      <div class="cheque-image-section panel fade-up" style="animation-delay: .05s;">
+        <div class="image-tabs">
+          <button class="image-tab active" data-tab="front">
+            <i class="bi bi-image"></i> Front
+          </button>
+          <button class="image-tab" data-tab="uv">
+            <i class="bi bi-image"></i> Front UV
+          </button>
+          <button class="image-tab" data-tab="back">
+            <i class="bi bi-image"></i> Back
+          </button>
+        </div>
+
+        <div class="image-viewer">
+          <div class="image-placeholder" id="front-image">
+            {% if cheque.front_image_url %}
+              <img src="{{ cheque.front_image_url }}" alt="Cheque front" class="cheque-image-display" />
+            {% else %}
+              <i class="bi bi-image"></i>
+              <p>Cheque Front Image</p>
+            {% endif %}
+          </div>
+          <div class="image-placeholder hidden" id="uv-image">
+            {% if cheque.front_uv_image_url %}
+              <img src="{{ cheque.front_uv_image_url }}" alt="Cheque front UV" class="cheque-image-display" />
+            {% else %}
+              <i class="bi bi-image"></i>
+              <p>Cheque Front UV Image</p>
+            {% endif %}
+          </div>
+          <div class="image-placeholder hidden" id="back-image">
+            {% if cheque.back_image_url %}
+              <img src="{{ cheque.back_image_url }}" alt="Cheque back" class="cheque-image-display" />
+            {% else %}
+              <i class="bi bi-image"></i>
+              <p>Cheque Back Image</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Automated Data Capture -->
+      <div class="ocr-data-section panel fade-up" style="animation-delay: .1s;">
+        <h2 class="ocr-title">Automated Data Capture</h2>
+        
+        <div class="ocr-fields-grid">
+          <div class="ocr-field">
+            <label>SYSTEM ID</label>
+            <div class="ocr-value">{{ cheque.system_id }}</div>
+            <span class="ocr-status ok" title="Match"><i class="bi bi-check-circle-fill"></i></span>
+          </div>
+
+          <div class="ocr-field">
+            <label>AMOUNT</label>
+            <div class="ocr-value">{{ cheque.amount }}</div>
+            <span class="ocr-status {% if cheque.amount_status == 'match' %}ok{% else %}error{% endif %}" 
+                  title="{% if cheque.amount_status == 'match' %}Match{% else %}Mismatch{% endif %}">
+              <i class="bi bi-{% if cheque.amount_status == 'match' %}check-circle-fill{% else %}x-circle-fill{% endif %}"></i>
+            </span>
+          </div>
+
+          <div class="ocr-field">
+            <label>DATE</label>
+            <div class="ocr-value">{{ cheque.date }}</div>
+            <span class="ocr-status {% if cheque.date_status == 'match' %}ok{% else %}error{% endif %}" 
+                  title="{% if cheque.date_status == 'match' %}Match{% else %}Mismatch{% endif %}">
+              <i class="bi bi-{% if cheque.date_status == 'match' %}check-circle-fill{% else %}x-circle-fill{% endif %}"></i>
+            </span>
+          </div>
+
+          <div class="ocr-field">
+            <label>AMOUNT IN WORDS</label>
+            <div class="ocr-value">{{ cheque.amount_in_words }}</div>
+            <span class="ocr-status {% if cheque.amount_words_status == 'match' %}ok{% else %}error{% endif %}" 
+                  title="{% if cheque.amount_words_status == 'match' %}Match{% else %}Mismatch{% endif %}">
+              <i class="bi bi-{% if cheque.amount_words_status == 'match' %}check-circle-fill{% else %}x-circle-fill{% endif %}"></i>
+            </span>
+          </div>
+
+          <div class="ocr-field">
+            <label>BENEFICIARY NAME</label>
+            <div class="ocr-value">{{ cheque.beneficiary }}</div>
+            <span class="ocr-status {% if cheque.beneficiary_status == 'match' %}ok{% else %}error{% endif %}" 
+                  title="{% if cheque.beneficiary_status == 'match' %}Match{% else %}Mismatch{% endif %}">
+              <i class="bi bi-{% if cheque.beneficiary_status == 'match' %}check-circle-fill{% else %}x-circle-fill{% endif %}"></i>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chronology -->
+      <div class="chronology-section panel fade-up" style="animation-delay: .15s;">
+        <h2 class="chronology-title">Chronology</h2>
+        
+        <table class="chronology-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Action</th>
+              <th>Channel</th>
+              <th>Submitter</th>
+              <th>Branch</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>6/18/2026 10:48:39 AM</td>
+              <td>Submitted</td>
+              <td>Web</td>
+              <td>Unknown</td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="action-buttons-group fade-up" style="animation-delay: .2s;">
+        <form method="post" style="display:inline; margin-right:0.75rem;">
+          {% csrf_token %}
+          <button type="submit" name="action" value="approve" class="btn-approve">
+            <i class="bi bi-check-lg"></i> Approve
+          </button>
+        </form>
+        <form method="post" style="display:inline; margin-right:0.75rem;">
+          {% csrf_token %}
+          <button type="submit" name="action" value="reject" class="btn-reject">
+            <i class="bi bi-x-lg"></i> Reject
+          </button>
+        </form>
+        <form method="post" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" name="action" value="delete" class="btn-delete">
+            <i class="bi bi-trash-fill"></i> Delete
+          </button>
+        </form>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="toast-brand" id="toast">
+  <i class="bi bi-check-circle-fill"></i>
+  <span id="toastMsg">Saved successfully</span>
+</div>
+
+<style>
+/* Cheque Detail Page Styles */
+.cheque-detail-header {
+  margin-bottom: 1.5rem;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  color: var(--primary);
+  font-weight: 600;
+  font-size: .9rem;
+  text-decoration: none;
+  margin-bottom: .8rem;
+  transition: gap .2s var(--ease);
+}
+
+.back-link:hover {
+  gap: .6rem;
+}
+
+.cheque-detail-header h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.cheque-image-section {
+  animation-delay: .05s;
+}
+
+.image-tabs {
+  display: flex;
+  gap: .5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid var(--line);
+  padding-bottom: 0;
+}
+
+.image-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .75rem 1.2rem;
+  border: none;
+  background: transparent;
+  color: var(--ink-soft);
+  font-weight: 600;
+  font-size: .85rem;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all .2s var(--ease);
+  margin-bottom: -2px;
+}
+
+.image-tab:hover {
+  color: var(--primary);
+}
+
+.image-tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+.image-viewer {
+  position: relative;
+  background: var(--paper);
+  border-radius: var(--radius-sm);
+  padding: 2rem;
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.image-placeholder {
+  text-align: center;
+  color: var(--ink-faint);
+}
+
+.image-placeholder.hidden {
+  display: none;
+}
+
+.image-placeholder i {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: .5;
+}
+
+.image-placeholder p {
+  margin: 0;
+  font-size: .9rem;
+}
+
+.ocr-data-section {
+  animation-delay: .1s;
+}
+
+.ocr-title {
+  font-size: .95rem;
+  font-weight: 700;
+  margin: 0 0 1.5rem;
+  color: var(--ink);
+}
+
+.ocr-fields-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.2rem;
+}
+
+.ocr-field {
+  position: relative;
+  background: var(--paper);
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+  border: 1px solid var(--line);
+  transition: all .2s var(--ease);
+}
+
+.ocr-field:hover {
+  border-color: var(--primary-light);
+}
+
+.ocr-field label {
+  display: block;
+  font-size: .65rem;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--ink-faint);
+  font-weight: 700;
+  margin-bottom: .5rem;
+}
+
+.ocr-value {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .9rem;
+  font-weight: 600;
+  color: var(--ink);
+  padding-right: 1.8rem;
+}
+
+.ocr-status {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .85rem;
+  border-radius: 50%;
+}
+
+.ocr-status.ok {
+  color: var(--mint);
+}
+
+.ocr-status.error {
+  color: var(--rose);
+}
+
+.chronology-section {
+  animation-delay: .15s;
+}
+
+.chronology-title {
+  font-size: .95rem;
+  font-weight: 700;
+  margin: 0 0 1.5rem;
+  color: var(--ink);
+}
+
+.chronology-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .85rem;
+}
+
+.chronology-table th {
+  text-align: left;
+  font-size: .65rem;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--ink-faint);
+  font-weight: 700;
+  padding: .8rem;
+  border-bottom: 2px solid var(--line-strong);
+  background: transparent;
+}
+
+.chronology-table td {
+  padding: .9rem .8rem;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+}
+
+.chronology-table tbody tr:hover {
+  background: var(--paper);
+}
+
+.action-buttons-group {
+  display: flex;
+  gap: .8rem;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+  animation-delay: .2s;
+}
+
+.action-buttons-group button {
+  padding: .65rem 1.4rem;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: .85rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  transition: all .2s var(--ease);
+}
+
+.btn-edit {
+  background: var(--primary-light);
+  color: var(--primary);
+  border: 1px solid var(--primary-light);
+}
+
+.btn-edit:hover {
+  background: var(--primary);
+  color: #fff;
+}
+
+.btn-approve {
+  background: var(--mint);
+  color: #fff;
+  box-shadow: 0 4px 12px -4px rgba(15, 169, 104, .4);
+}
+
+.btn-approve:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px -4px rgba(15, 169, 104, .5);
+}
+
+.btn-reject {
+  background: var(--rose);
+  color: #fff;
+  box-shadow: 0 4px 12px -4px rgba(228, 56, 76, .4);
+}
+
+.btn-reject:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px -4px rgba(228, 56, 76, .5);
+}
+
+.btn-delete {
+  background: transparent;
+  color: var(--ink-soft);
+  border: 1px solid var(--line);
+}
+
+.btn-delete:hover {
+  background: var(--rose-soft);
+  color: var(--rose);
+  border-color: var(--rose);
+}
+</style>
+
+<script src="{% static 'js/dashboard.js' %}" type="text/javascript"></script>
+<script>
+// Image tab switching
+document.querySelectorAll('.image-tab').forEach(tab => {
+  tab.addEventListener('click', function() {
+    const tabName = this.getAttribute('data-tab');
+    
+    // Hide all images
+    document.querySelectorAll('.image-placeholder').forEach(img => {
+      img.classList.add('hidden');
+    });
+    
+    // Show selected image
+    document.getElementById(tabName + '-image').classList.remove('hidden');
+    
+    // Update active tab
+    document.querySelectorAll('.image-tab').forEach(t => t.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+</script>
+</body>
+</html>

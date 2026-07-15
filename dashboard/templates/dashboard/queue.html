@@ -1,0 +1,402 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AZIMUT LABS — Queue</title>
+<meta name="description" content="AZIMUT LABS cheque queue management — review and process cheques.">
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+
+<!-- Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+<!-- Bootstrap -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+
+<!-- App styles -->
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}" type="text/css">
+</head>
+<body>
+
+<div class="app-shell" id="appShell">
+  <div class="sidebar-scrim" id="sidebarScrim"></div>
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-mark"></div>
+      <span class="brand-name">AZIMUT LABS</span>
+      <button class="sidebar-toggle-btn d-none d-md-flex" id="collapseBtn" aria-label="Collapse sidebar">
+        <i class="bi bi-chevron-left"></i>
+      </button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="sidebar-section-label">Workspace</div>
+      <a href="{% url 'dashboard' %}" class="nav-item" data-page="dashboard">
+        <i class="bi bi-grid-1x2-fill"></i>
+        <span class="nav-label">Dashboard</span>
+      </a>
+      <a href="{% url 'upload_cheque' %}" class="nav-item" data-page="upload">
+        <i class="bi bi-cloud-arrow-up-fill"></i>
+        <span class="nav-label">Upload</span>
+      </a>
+      <a href="{% url 'queue' %}" class="nav-item active" data-page="queue">
+        <i class="bi bi-list-check"></i>
+        <span class="nav-label">Queue</span>
+        <span class="nav-badge">{{ total_queue }}</span>
+      </a>
+      <a href="#" class="nav-item" data-page="approval">
+        <i class="bi bi-patch-check-fill"></i>
+        <span class="nav-label">Approval</span>
+      </a>
+
+      <div class="sidebar-section-label" style="margin-top:1.4rem;">Reports</div>
+      <a href="#" class="nav-item" data-page="analytics">
+        <i class="bi bi-bar-chart-fill"></i>
+        <span class="nav-label">Analytics</span>
+      </a>
+      <a href="#" class="nav-item" data-page="settings">
+        <i class="bi bi-gear-fill"></i>
+        <span class="nav-label">Settings</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="helpwidget">
+        <div class="helpwidget-avatar">?</div>
+        <div class="helpwidget-text">
+          <div style="font-weight:600; font-size:.85rem;">Help &amp; support</div>
+          <small>Docs, shortcuts, contact</small>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <div class="main">
+    <!-- Topbar -->
+    <header class="topbar">
+      <button class="icon-btn d-md-none" id="mobileMenuBtn" aria-label="Open menu">
+        <i class="bi bi-list"></i>
+      </button>
+
+      <form action="{% url 'queue' %}" method="get" class="search-box">
+        <i class="bi bi-search"></i>
+        <input type="text" name="q" placeholder="Search cheque ID, amount, beneficiary…" aria-label="Search" value="{{ q|default:'' }}">
+      </form>
+
+      <div class="brand-topbar d-none d-md-flex">
+        <span class="brand-pill">AZIMUT LABS</span>
+      </div>
+
+      <div class="topbar-actions">
+        <button class="icon-btn" id="themeToggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+          <i class="bi bi-moon-stars-fill"></i>
+        </button>
+        <button class="icon-btn" aria-label="Notifications" title="Notifications">
+          <i class="bi bi-bell-fill"></i>
+          <span class="dot"></span>
+        </button>
+        <div class="user-chip">
+          <div class="avatar-fallback">EZ</div>
+          <div class="d-none d-sm-block">
+            <div style="font-weight:600; font-size:.85rem; line-height:1.1;">Ezaan</div>
+            <div style="font-size:.72rem; color:var(--ink-faint); line-height:1.1;">Ops analyst</div>
+          </div>
+          <i class="bi bi-chevron-down" style="font-size:.7rem; color:var(--ink-faint);"></i>
+        </div>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <main class="content">
+      <div class="page-heading fade-up" style="margin-bottom: 1.5rem;">
+        <div>
+          <h1>Check Queue</h1>
+          <p>Review and process cheques in queue</p>
+        </div>
+      </div>
+
+      <!-- Recent Cheques Panel -->
+      <div class="panel fade-up" style="animation-delay: .05s;">
+        <div class="panel-head-flex">
+          <div>
+            <h2>Check Queue</h2>
+            <div class="subtitle">Cheques pending approval and processing</div>
+          </div>
+          <div class="filter-chips-group">
+            <a href="?status=all" class="filter-chip {% if status_filter == 'all' %}active{% endif %}">All</a>
+            <a href="?status=pending" class="filter-chip {% if status_filter == 'pending' %}active{% endif %}">Pending</a>
+            <a href="?status=approved" class="filter-chip {% if status_filter == 'approved' %}active{% endif %}">Approved</a>
+            <a href="?status=rejected" class="filter-chip {% if status_filter == 'rejected' %}active{% endif %}">Rejected</a>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-wrapper fade-up" style="animation-delay: .1s;">
+          <table class="queue-check-table">
+            <thead>
+              <tr>
+                <th>SYSTEM ID</th>
+                <th>AMOUNT</th>
+                <th>DATE</th>
+                <th>BENEFICIARY</th>
+                <th>MATCH</th>
+                <th>ACTION</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for cheque in cheques %}
+              <tr>
+                <td class="system-id-cell">{{ cheque.system_id }}</td>
+                <td class="amount-cell">
+                  {% if cheque.amount %}
+                    {{ cheque.amount }}
+                  {% else %}
+                    –
+                  {% endif %}
+                </td>
+                <td class="date-cell">{{ cheque.date }}</td>
+                <td class="beneficiary-cell">{{ cheque.beneficiary }}</td>
+                <td class="match-cell">
+                  {% if cheque.match_status == 'mismatch' %}
+                    <span class="match-badge mismatch">
+                      <i class="bi bi-exclamation-triangle-fill"></i> Mismatch
+                    </span>
+                  {% elif cheque.match_status == 'match' %}
+                    <span class="match-badge match">
+                      <i class="bi bi-check-circle-fill"></i> Match
+                    </span>
+                  {% else %}
+                    <span class="match-badge pending">
+                      <i class="bi bi-hourglass-split"></i> Pending
+                    </span>
+                  {% endif %}
+                </td>
+                <td class="action-cell">
+                  <a href="{% url 'cheque_detail' cheque.id %}" class="action-icon view-icon" title="View details">
+                    <i class="bi bi-eye-fill"></i>
+                  </a>
+                  <form method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="cheque_id" value="{{ cheque.id }}" />
+                    <button type="submit" name="action" value="delete" class="action-icon delete-icon" title="Delete">
+                      <i class="bi bi-trash-fill"></i>
+                    </button>
+                  </form>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="6" style="text-align: center; padding: 2rem; color: var(--ink-faint);">
+                  <i class="bi bi-inbox" style="font-size: 2rem; display: block; margin-bottom: .5rem;"></i>
+                  No cheques found
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="toast-brand" id="toast">
+  <i class="bi bi-check-circle-fill"></i>
+  <span id="toastMsg">Saved successfully</span>
+</div>
+
+<style>
+/* Queue-specific styles */
+.panel-head-flex {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.panel-head-flex h2 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.panel-head-flex .subtitle {
+  color: var(--ink-faint);
+  font-size: .82rem;
+  margin-top: .15rem;
+}
+
+.filter-chips-group {
+  display: flex;
+  gap: .6rem;
+  flex-wrap: wrap;
+}
+
+.filter-chip {
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink-soft);
+  padding: .45rem .9rem;
+  border-radius: 999px;
+  font-size: .8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .18s var(--ease);
+  text-decoration: none;
+  display: inline-block;
+}
+
+.filter-chip:hover {
+  border-color: var(--primary);
+  background: var(--primary-light);
+  color: var(--primary-dark);
+}
+
+.filter-chip.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  box-shadow: 0 4px 12px -4px hsl(var(--primary-h) var(--primary-s) 45% / .5);
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  margin: 1.5rem 0;
+}
+
+.queue-check-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .85rem;
+}
+
+.queue-check-table th {
+  text-align: left;
+  font-size: .65rem;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: var(--ink-faint);
+  font-weight: 700;
+  padding: 1rem;
+  border-bottom: 2px solid var(--line-strong);
+  background: transparent;
+}
+
+.queue-check-table td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+
+.queue-check-table tbody tr {
+  transition: background .15s var(--ease);
+}
+
+.queue-check-table tbody tr:hover {
+  background: var(--paper);
+}
+
+.system-id-cell {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.amount-cell {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.date-cell {
+  color: var(--ink-soft);
+  font-size: .85rem;
+}
+
+.beneficiary-cell {
+  color: var(--ink);
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.match-cell {
+  text-align: center;
+}
+
+.match-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  padding: .35rem .65rem;
+  border-radius: 999px;
+  font-size: .73rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.match-badge.mismatch {
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+
+.match-badge.match {
+  background: var(--mint-soft);
+  color: var(--mint);
+}
+
+.match-badge.pending {
+  background: var(--sky-soft);
+  color: var(--sky);
+}
+
+.match-badge i {
+  font-size: .6rem;
+}
+
+.action-cell {
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  gap: .5rem;
+}
+
+.action-icon {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--ink-faint);
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all .18s var(--ease);
+  font-size: .85rem;
+  text-decoration: none;
+}
+
+.action-icon:hover {
+  background: var(--paper);
+  color: var(--primary);
+}
+
+.action-icon.delete-icon:hover {
+  background: var(--rose-soft);
+  color: var(--rose);
+}
+</style>
+
+<script src="{% static 'js/dashboard.js' %}" type="text/javascript"></script>
+</body>
+</html>
