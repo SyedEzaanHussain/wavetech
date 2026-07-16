@@ -757,6 +757,21 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .toast-brand.show { transform: translateY(0); opacity: 1; }
 .toast-brand i { color: var(--mint); }
 
+/* Realtime row animation */
+.realtime-row {
+  animation: realtime-pulse .7s var(--ease);
+}
+
+.realtime-row.new-record {
+  background: linear-gradient(90deg, rgba(15,169,104,0.16), rgba(46,123,214,0.08));
+  box-shadow: inset 0 0 0 1px rgba(15,169,104,0.16);
+}
+
+@keyframes realtime-pulse {
+  0% { transform: translateY(4px); opacity: 0.4; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
 /* Fade-up utility for section entrance */
 .fade-up {
   opacity: 0; transform: translateY(16px);

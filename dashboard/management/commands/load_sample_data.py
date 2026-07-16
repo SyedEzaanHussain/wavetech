@@ -10,7 +10,7 @@ class Command(BaseCommand):
     help = 'Load sample cheque data for testing'
 
     def handle(self, *args, **options):
-        self.stdout.write(self.style.SUCCESS('🔄 Loading sample data...'))
+        self.stdout.write(self.style.SUCCESS('Loading sample data...'))
         
         # Create sample cheques
         cheques_data = [
@@ -115,7 +115,7 @@ class Command(BaseCommand):
             
             # Check if cheque already exists
             if Cheque.objects.filter(tracking_no=cheque_data['tracking_no']).exists():
-                self.stdout.write(self.style.WARNING(f"⏭️  Cheque {cheque_data['tracking_no']} already exists, skipping..."))
+                self.stdout.write(self.style.WARNING(f"Skipping: Cheque {cheque_data['tracking_no']} already exists, skipping..."))
                 continue
             
             # Create cheque
@@ -148,8 +148,8 @@ class Command(BaseCommand):
                     remarks=f"Marked as {cheque.status} during sample data load"
                 )
             
-            self.stdout.write(self.style.SUCCESS(f"✅ Created cheque: {cheque.tracking_no} ({cheque.beneficiary_name})"))
+            self.stdout.write(self.style.SUCCESS(f"Created cheque: {cheque.tracking_no} ({cheque.beneficiary_name})"))
         
         # Summary
-        self.stdout.write(self.style.SUCCESS(f'\n🎉 Successfully loaded {created_count} sample cheques!'))
-        self.stdout.write(self.style.SUCCESS('📊 You can now access them at: http://127.0.0.1:8000/dashboard/queue/'))
+        self.stdout.write(self.style.SUCCESS(f'\nSuccessfully loaded {created_count} sample cheques!'))
+        self.stdout.write(self.style.SUCCESS('You can now access them at: http://127.0.0.1:8000/dashboard/queue/'))

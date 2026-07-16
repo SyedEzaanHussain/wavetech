@@ -7,6 +7,19 @@
 <title>AZIMUT LABS — Queue</title>
 <meta name="description" content="AZIMUT LABS cheque queue management — review and process cheques.">
 
+<script>
+  window.CHEQUE_REALTIME_CONFIG = {
+    supabaseUrl: "{{ supabase_url|default:'' }}",
+    supabaseAnonKey: "{{ supabase_anon_key|default:'' }}",
+    summaryEndpoint: "{% url 'realtime_summary' %}",
+    queueEndpoint: "{% url 'realtime_queue_data' %}",
+    queuePostUrl: "{% url 'queue' %}",
+    chequeDetailUrlTemplate: "{% url 'cheque_detail' '00000000-0000-0000-0000-000000000000' %}",
+    page: 'queue'
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -104,10 +117,9 @@
           <span class="dot"></span>
         </button>
         <div class="user-chip">
-          <div class="avatar-fallback">EZ</div>
+          <div class="avatar-fallback">{{ user_initials }}</div>
           <div class="d-none d-sm-block">
-            <div style="font-weight:600; font-size:.85rem; line-height:1.1;">Ezaan</div>
-            <div style="font-size:.72rem; color:var(--ink-faint); line-height:1.1;">Ops analyst</div>
+            <div style="font-weight:600; font-size:.85rem; line-height:1.1;">{{ user_name }}</div>
           </div>
           <i class="bi bi-chevron-down" style="font-size:.7rem; color:var(--ink-faint);"></i>
         </div>
@@ -147,11 +159,10 @@
                 <th>AMOUNT</th>
                 <th>DATE</th>
                 <th>BENEFICIARY</th>
-                <th>MATCH</th>
                 <th>ACTION</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody id="queueRows">
               {% for cheque in cheques %}
               <tr>
                 <td class="system-id-cell">{{ cheque.system_id }}</td>
@@ -164,29 +175,15 @@
                 </td>
                 <td class="date-cell">{{ cheque.date }}</td>
                 <td class="beneficiary-cell">{{ cheque.beneficiary }}</td>
-                <td class="match-cell">
-                  {% if cheque.match_status == 'mismatch' %}
-                    <span class="match-badge mismatch">
-                      <i class="bi bi-exclamation-triangle-fill"></i> Mismatch
-                    </span>
-                  {% elif cheque.match_status == 'match' %}
-                    <span class="match-badge match">
-                      <i class="bi bi-check-circle-fill"></i> Match
-                    </span>
-                  {% else %}
-                    <span class="match-badge pending">
-                      <i class="bi bi-hourglass-split"></i> Pending
-                    </span>
-                  {% endif %}
-                </td>
                 <td class="action-cell">
-                  <a href="{% url 'cheque_detail' cheque.id %}" class="action-icon view-icon" title="View details">
+                  <a href="{% url 'cheque_detail' cheque.id %}" class="action-icon view-icon view-link" title="View details">
                     <i class="bi bi-eye-fill"></i>
                   </a>
-                  <form method="post" style="display:inline;">
+                  <form method="post" action="{% url 'queue' %}" class="delete-form" style="display:inline;">
                     {% csrf_token %}
                     <input type="hidden" name="cheque_id" value="{{ cheque.id }}" />
-                    <button type="submit" name="action" value="delete" class="action-icon delete-icon" title="Delete">
+                    <input type="hidden" name="action" value="delete" />
+                    <button type="submit" class="action-icon delete-icon" title="Delete">
                       <i class="bi bi-trash-fill"></i>
                     </button>
                   </form>
@@ -194,7 +191,7 @@
               </tr>
               {% empty %}
               <tr>
-                <td colspan="6" style="text-align: center; padding: 2rem; color: var(--ink-faint);">
+                <td colspan="5" style="text-align: center; padding: 2rem; color: var(--ink-faint);">
                   <i class="bi bi-inbox" style="font-size: 2rem; display: block; margin-bottom: .5rem;"></i>
                   No cheques found
                 </td>
@@ -327,40 +324,6 @@
   color: var(--ink);
   font-weight: 500;
   text-transform: uppercase;
-}
-
-.match-cell {
-  text-align: center;
-}
-
-.match-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: .35rem;
-  padding: .35rem .65rem;
-  border-radius: 999px;
-  font-size: .73rem;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.match-badge.mismatch {
-  background: var(--amber-soft);
-  color: var(--amber);
-}
-
-.match-badge.match {
-  background: var(--mint-soft);
-  color: var(--mint);
-}
-
-.match-badge.pending {
-  background: var(--sky-soft);
-  color: var(--sky);
-}
-
-.match-badge i {
-  font-size: .6rem;
 }
 
 .action-cell {

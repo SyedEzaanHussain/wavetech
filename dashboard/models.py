@@ -1,7 +1,6 @@
 import uuid
 from django.db import models
 from django.contrib.auth.models import User
-from django.contrib.postgres.fields import ArrayField
 from django.core.validators import MinValueValidator, MaxValueValidator
 
 
@@ -51,7 +50,7 @@ class Cheque(models.Model):
     MATCH_STATUS_CHOICES = [
         ('match', 'Match'),
         ('mismatch', 'Mismatch'),
-        ('pending', 'Pending'),
+       
     ]
     
     # Primary key
@@ -74,7 +73,7 @@ class Cheque(models.Model):
     
     # Status tracking
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', db_index=True)
-    match_status = models.CharField(max_length=20, choices=MATCH_STATUS_CHOICES, default='pending', db_index=True)
+    match_status = models.CharField(max_length=20, choices=MATCH_STATUS_CHOICES, default='mismatch', db_index=True)
     
     # Soft delete
     is_deleted = models.BooleanField(default=False)

@@ -104,10 +104,9 @@
           <span class="dot"></span>
         </button>
         <div class="user-chip">
-          <div class="avatar-fallback">EZ</div>
+          <div class="avatar-fallback">{{ user_initials }}</div>
           <div class="d-none d-sm-block">
-            <div style="font-weight:600; font-size:.85rem; line-height:1.1;">Ezaan</div>
-            <div style="font-size:.72rem; color:var(--ink-faint); line-height:1.1;">Ops analyst</div>
+            <div style="font-weight:600; font-size:.85rem; line-height:1.1;">{{ user_name }}</div>
           </div>
           <i class="bi bi-chevron-down" style="font-size:.7rem; color:var(--ink-faint);"></i>
         </div>
@@ -229,13 +228,21 @@
             </tr>
           </thead>
           <tbody>
+            {% for entry in cheque.status_history %}
             <tr>
-              <td>6/18/2026 10:48:39 AM</td>
-              <td>Submitted</td>
-              <td>Web</td>
-              <td>Unknown</td>
-              <td></td>
+              <td>{{ entry.changed_at|date:"n/j/Y g:i:s A" }}</td>
+              <td>{{ entry.new_status|title }}</td>
+            <td>—</td>
+              <td>—</td>
+              <td>{{ entry.remarks|default:"" }}</td>
             </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5" style="text-align:center; color:var(--ink-faint); padding:1.5rem;">
+                No status history available
+              </td>
+            </tr>
+            {% endfor %}
           </tbody>
         </table>
       </div>
